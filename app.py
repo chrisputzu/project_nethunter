@@ -5,15 +5,7 @@ import base64
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
-from selenium.webdriver.chrome.service import Service
-from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
-import streamlit as st
-import chromedriver_autoinstaller
+from bs4 import BeautifulSoup
 
 def shodan_ip_tool() -> str:
     """
@@ -31,10 +23,11 @@ def shodan_ip_tool() -> str:
                       Signature 
                       Signature Value.
                       
+
     Provide an exhaustive yet comprehensive summary of the extracted insights.
     """
     
-    prompt="""
+    prompt = """
     extracts from given user message if exists the IP 
     such as 20.111.12.195 ad return only the ip
     """
@@ -45,24 +38,14 @@ def shodan_ip_tool() -> str:
     )
     print(extracte_ip.text)
     
-    chrome_options = Options()
-    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-    chrome_options.add_argument("--headless")  
-    chrome_options.add_argument("--disable-gpu")  
-    chrome_options.add_argument("--window-size=1920x1080")  
-    chrome_options.add_argument("--no-sandbox")  
-    chrome_options.add_argument("--disable-dev-shm-usage")  
+    url = f"https://www.shodan.io/host/{extracte_ip.text}"
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+    response = requests.get(url, headers=headers)
     
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=chrome_options)
-    driver.get(f"https://www.shodan.io/host/{extracte_ip.text}")
-
-    shodan_ip_data = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.XPATH, '//*[@id="host"]/div[2]'))
-    )
-    shodan_ip_data_text = shodan_ip_data.text
-    time.sleep(2)
-    driver.quit()
+    soup = BeautifulSoup(response.content, "html.parser")
+    
+    shodan_ip_data = soup.find(id="host")  
+    shodan_ip_data_text = shodan_ip_data.get_text() if shodan_ip_data else "No data found"
     
     return shodan_ip_data_text
 
