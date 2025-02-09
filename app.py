@@ -1,23 +1,13 @@
 import os
-import time
 import requests
 import base64
+import streamlit as st
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
-from selenium.webdriver.chrome.service import Service
-from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
+from bs4 import BeautifulSoup
 
-from selenium import webdriver
-from selenium.webdriver.firefox.service import Service as FirefoxService
-from selenium.webdriver.firefox.options import Options
-from webdriver_manager.firefox import GeckoDriverManager
-import streamlit as st
+
 
 def shodan_ip_tool() -> str:
     """
@@ -47,25 +37,15 @@ def shodan_ip_tool() -> str:
         model='gemini-1.5-flash',
         contents=[prompt, user_message]
     )
-    print(extracte_ip.text)
-    
-    firefox_options = Options()
-    firefox_options.add_argument("--headless")  # Necessario per funzionare su Streamlit
-    firefox_options.add_argument("--no-sandbox")
 
-    # Usa GeckoDriverManager per installare automaticamente il driver corretto
-    service = FirefoxService(GeckoDriverManager().install())
-    driver = webdriver.Firefox(service=service, options=firefox_options)
-    driver.get(f"https://www.shodan.io/host/{extracte_ip.text}")
-
-    shodan_ip_data = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.XPATH, '//*[@id="host"]/div[2]'))
-    )
-    shodan_ip_data_text = shodan_ip_data.text
-    time.sleep(2)
-    driver.quit()
+    url = f"https://www.shodan.io/host/{extracte_ip.text}"
+    response = requests.get(url=url)
     
-    return shodan_ip_data_text
+    soup = BeautifulSoup(response.text, 'html.parser')
+    element = soup.find(id='host')
+    text_element = element.get_text()
+    
+    return text_element
 
 
 def virus_total_url_tool() -> str:
