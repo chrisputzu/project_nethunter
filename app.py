@@ -13,6 +13,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 import streamlit as st
+import chromedriver_autoinstaller
 
 def shodan_ip_tool() -> str:
     """
@@ -196,6 +197,8 @@ def virus_total_hash_tool() -> str:
 
 if __name__ == '__main__':
     
+    chromedriver_autoinstaller.install()
+
     load_dotenv('.env')
     
     # google_api_key = os.getenv('GOOGLE_API_KEY')
