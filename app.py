@@ -1,11 +1,10 @@
-import os
-import time
 import requests
 import base64
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
+import streamlit as st
 
 def shodan_ip_tool() -> str:
     """
@@ -180,8 +179,6 @@ def virus_total_hash_tool() -> str:
 
 if __name__ == '__main__':
     
-    chromedriver_autoinstaller.install()
-
     load_dotenv('.env')
     
     # google_api_key = os.getenv('GOOGLE_API_KEY')
