@@ -1,9 +1,22 @@
+import os
+import time
 import requests
 import base64
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
-from bs4 import BeautifulSoup
+from selenium.webdriver.chrome.service import Service
+from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options
+
+from selenium import webdriver
+from selenium.webdriver.firefox.service import Service as FirefoxService
+from selenium.webdriver.firefox.options import Options
+from webdriver_manager.firefox import GeckoDriverManager
 import streamlit as st
 
 def shodan_ip_tool() -> str:
@@ -22,11 +35,10 @@ def shodan_ip_tool() -> str:
                       Signature 
                       Signature Value.
                       
-
     Provide an exhaustive yet comprehensive summary of the extracted insights.
     """
     
-    prompt = """
+    prompt="""
     extracts from given user message if exists the IP 
     such as 20.111.12.195 ad return only the ip
     """
@@ -37,14 +49,21 @@ def shodan_ip_tool() -> str:
     )
     print(extracte_ip.text)
     
-    url = f"https://www.shodan.io/host/{extracte_ip.text}"
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
-    response = requests.get(url, headers=headers)
-    
-    soup = BeautifulSoup(response.content, "html.parser")
-    
-    shodan_ip_data = soup.find(id="host")  
-    shodan_ip_data_text = shodan_ip_data.get_text() if shodan_ip_data else "No data found"
+    firefox_options = Options()
+    firefox_options.add_argument("--headless")  # Necessario per funzionare su Streamlit
+    firefox_options.add_argument("--no-sandbox")
+
+    # Usa GeckoDriverManager per installare automaticamente il driver corretto
+    service = FirefoxService(GeckoDriverManager().install())
+    driver = webdriver.Firefox(service=service, options=firefox_options)
+    driver.get(f"https://www.shodan.io/host/{extracte_ip.text}")
+
+    shodan_ip_data = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.XPATH, '//*[@id="host"]/div[2]'))
+    )
+    shodan_ip_data_text = shodan_ip_data.text
+    time.sleep(2)
+    driver.quit()
     
     return shodan_ip_data_text
 
@@ -180,13 +199,11 @@ def virus_total_hash_tool() -> str:
 if __name__ == '__main__':
     
     load_dotenv('.env')
-    
     # google_api_key = os.getenv('GOOGLE_API_KEY')
     # virus_total_api_key = os.getenv('VIRUS_TOTAL_API_KEY')
     
     google_api_key = st.secrets["GOOGLE_API_KEY"]
     virus_total_api_key = st.secrets["VIRUS_TOTAL_API_KEY"]
-    
     client = genai.Client()
 
     st.title('Ai NetRunner CyberTool')
